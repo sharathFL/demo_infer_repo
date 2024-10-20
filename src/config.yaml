@@ -1,5 +1,7 @@
 model_repo_url: "https://github.com/sharathFL/demo_model_repo.git"
-model_branch: "model_A"
+model_branch: "model_C"
+model_filename: "model_C.pt"  # Explicit model filename
 input_data: "data/input/dummy_data.npy"  # Updated to use the prepared dummy data
 output_file: "predictions/predictions.json"
+output: "data/input/dummy_data.npy"
 threshold: 0.7

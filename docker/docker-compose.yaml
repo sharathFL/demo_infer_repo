@@ -1,6 +1,6 @@
 version: '3.8'
 services:
-  infer:
+  infer-model:
     build:
       context: .
       dockerfile: Dockerfile

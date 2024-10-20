@@ -1,19 +1,24 @@
-import os
 import argparse
+import yaml
 import numpy as np
+import os
 
-# Argument parsing
-parser = argparse.ArgumentParser(description="Prepare dummy data for inference")
-parser.add_argument('--output', required=True, help="Path to save the prepared data")
+# Argument parsing to take the config file path
+parser = argparse.ArgumentParser(description="Prepare data for training")
+parser.add_argument('--config', required=True, help="Path to the configuration file")
 args = parser.parse_args()
 
+# Load the configuration file to get the output path
+with open(args.config, "r") as f:
+    config = yaml.safe_load(f)
+
+# Prepare dummy data
+dummy_data = np.random.rand(16000).astype(np.float32)  # Generate random dummy data
+
 # Ensure the output directory exists
-os.makedirs(os.path.dirname(args.output), exist_ok=True)
+output_dir = os.path.dirname(config['output'])
+os.makedirs(output_dir, exist_ok=True)
 
-# Simulate dummy audio data (e.g., 16k samples of random noise)
-dummy_data = np.random.rand(16000).astype(np.float32)
-
-# Save the dummy data as a .npy file
-np.save(args.output, dummy_data)
-
-print(f"Dummy data prepared and saved to {args.output}")
+# Save the dummy data to the specified output path
+np.save(config['output'], dummy_data)
+print(f"Dummy data prepared and saved to {config['output']}")

@@ -1,8 +1,17 @@
 import torch
 import argparse
 import yaml
-import numpy as np
 import json
+import os
+import sys
+
+# Add the path to the cloned model builder repo to the Python path
+sys.path.insert(0, os.path.abspath("models_repo/src"))
+
+# Import the model class and preprocessing/post-processing functions from the cloned model builder repo
+from models import DummyModelV2  # Import the model class from the cloned repo
+from preprocess import preprocess_audio_data  # Import the preprocessing function
+from postprocess import postprocess_anomaly_detection  # Import the post-processing function
 
 # Argument parsing to take the config file path
 parser = argparse.ArgumentParser(description="Run inference with the pulled model")
@@ -13,19 +22,29 @@ args = parser.parse_args()
 with open(args.config, "r") as f:
     config = yaml.safe_load(f)
 
-# Load the model
+# Load the entire model (architecture + weights)
 model = torch.load("models/model.pt")
-print("Model loaded successfully")
 
-# Load the prepared dummy input data
-input_data = np.load(config["input_data"])
+# Print model version to confirm which model is being used
+print(f"Running inference with model version: {model.get_version()}")
+
+# Preprocess the input data and convert it to a tensor
+input_data = preprocess_audio_data("data/input/dummy_data.npy")
 input_tensor = torch.tensor(input_data).float()
 
-# Run inference
+# Downsample or reshape the input to match the model's expected size (e.g., (10, 1))
+input_tensor = input_tensor.view(1600, 10).mean(dim=0).view(1, 10)
+
+# Forward pass through the model
 output = model(input_tensor)
 
-# Post-process and output the results
-result = {"anomaly_score": output.item(), "is_anomalous": output.item() > config["threshold"]}
+# Post-process the model's output using the function from postprocess.py
+result = postprocess_anomaly_detection(output, config)
+
+# Ensure the predictions directory exists
+os.makedirs(os.path.dirname(config["output_file"]), exist_ok=True)
+
+# Save the results to the output file
 with open(config["output_file"], "w") as f:
     json.dump(result, f)
 

@@ -2,3 +2,4 @@ dvc
 numpy
 pandas
 keras
+torch

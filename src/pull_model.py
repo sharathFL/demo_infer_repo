@@ -12,21 +12,34 @@ args = parser.parse_args()
 with open(args.config, "r") as f:
     config = yaml.safe_load(f)
 
-# Get the model repo URL and branch from config.yaml
+# Get the model repo URL, branch, and model filename from config.yaml
 MODEL_REPO_URL = config['model_repo_url']
 MODEL_BRANCH = config['model_branch']
+MODEL_FILENAME = config['model_filename']  # The model filename is specified in the config
 
 # Step 1: Clone the model builder repository if it doesn't exist
 if not os.path.exists("models_repo"):
-    subprocess.run(["git", "clone", MODEL_REPO_URL, "models_repo"])
+    print(f"Cloning {MODEL_REPO_URL} into models_repo directory...")
+    subprocess.run(["git", "clone", MODEL_REPO_URL, "models_repo"], check=True)
 
 # Step 2: Checkout the correct branch
-subprocess.run(["git", "-C", "models_repo", "checkout", MODEL_BRANCH])
+print(f"Checking out branch {MODEL_BRANCH} in models_repo...")
+subprocess.run(["git", "-C", "models_repo", "checkout", MODEL_BRANCH], check=True)
 
-# Step 3: Pull the model using DVC from the correct branch
-subprocess.run(["dvc", "-C", "models_repo", "pull"])
+# Step 3: Pull the model from the DVC remote storage (ensure DVC is initialized in the model repo)
+print("Pulling model from DVC...")
+subprocess.run(["dvc", "pull"], cwd="models_repo", check=True)
 
-# Step 4: Copy the model to the inference repo
-subprocess.run(["cp", "models_repo/models/model.pt", "models/model.pt"])
+# Step 4: Use the model filename from the config file
+model_src_path = os.path.join("models_repo", "models", MODEL_FILENAME)
+model_dst_path = os.path.join("models", "model.pt")
 
-print(f"Model from branch {MODEL_BRANCH} successfully pulled and copied to the inference repo.")
+# Step 5: Copy the model and preprocessing scripts to the correct locations in the inference repo
+os.makedirs("models", exist_ok=True)
+
+if os.path.exists(model_src_path):
+    subprocess.run(["cp", model_src_path, model_dst_path], check=True)
+    print(f"Model {MODEL_FILENAME} from branch {MODEL_BRANCH} successfully pulled and copied to the inference repo.")
+else:
+    raise FileNotFoundError(f"Model file '{MODEL_FILENAME}' not found in models_repo/models/")
+

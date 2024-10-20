@@ -1,23 +1,27 @@
 stages:
   prepare_data:
-    cmd: python src/prepare_data.py --output data/input/dummy_data.npy
+    cmd: python src/prepare_data.py --config src/config.yaml
+    deps:
+      - src/prepare_data.py
+      - src/config.yaml
     outs:
-      - data/input/dummy_data.npy  # The prepared dummy data
+      - data/input/dummy_data.npy
 
   pull_model:
-    cmd: |
-      python pull_model.py --config config.yaml
+    cmd: python src/pull_model.py --config src/config.yaml
     deps:
-      - config.yaml
+      - src/pull_model.py
+      - src/config.yaml
     outs:
-      - models/model.pt
+      - models_repo/  # Cloned model builder repo
+      - models/model.pt  # Pulled model
 
   infer:
-    cmd: python src/inference.py --config config.yaml
+    cmd: PYTHONPATH=src python src/inference.py --config src/config.yaml
     deps:
-      - models/model.pt
-      - src/inference.py
-      - data/input/dummy_data.npy  # Use the prepared data as input
-      - config.yaml
+      - models/model.pt  # Pulled model
+      - models_repo/src/models.py  # The model class from the cloned model builder repo
+      - src/inference.py  # The inference script
+      - src/config.yaml  # Configuration file for the pipeline
     outs:
-      - predictions/predictions.json
+      - predictions/predictions.json  # Output predictions from the model
