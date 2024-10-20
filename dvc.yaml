@@ -1,0 +1,23 @@
+stages:
+  prepare_data:
+    cmd: python src/prepare_data.py --output data/input/dummy_data.npy
+    outs:
+      - data/input/dummy_data.npy  # The prepared dummy data
+
+  pull_model:
+    cmd: |
+      python pull_model.py --config config.yaml
+    deps:
+      - config.yaml
+    outs:
+      - models/model.pt
+
+  infer:
+    cmd: python src/inference.py --config config.yaml
+    deps:
+      - models/model.pt
+      - src/inference.py
+      - data/input/dummy_data.npy  # Use the prepared data as input
+      - config.yaml
+    outs:
+      - predictions/predictions.json

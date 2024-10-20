@@ -1,0 +1,5 @@
+model_repo_url: "https://github.com/sharathFL/demo_model_repo.git"
+model_branch: "model_A"
+input_data: "data/input/dummy_data.npy"  # Updated to use the prepared dummy data
+output_file: "predictions/predictions.json"
+threshold: 0.7

@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  infer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["tail", "-f", "/dev/null"]  # Keeps the container running
+    volumes:
+      - ..:/code  # Mount working directory to sync changes
+      - /mnt/data1Tb/demo_model_remote:/remote 
+    working_dir: /code
