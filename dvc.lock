@@ -14,7 +14,7 @@ stages:
     outs:
     - path: data/input/dummy_data.npy
       hash: md5
-      md5: 11f3396a25ef7f9a8da9dfeb0e152351
+      md5: e1aa7461d1779e000ba1824ef4f73c8c
       size: 64128
   pull_model:
     cmd: python src/pull_model.py --config src/config.yaml
