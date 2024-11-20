@@ -9,7 +9,7 @@ COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN apt-get update && apt-get install -y git && \
+RUN apt-get update && apt-get install -y git postgresql-client && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy the rest of the code

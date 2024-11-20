@@ -8,4 +8,17 @@ services:
     volumes:
       - ..:/code  # Mount working directory to sync changes
       - /mnt/data1Tb/demo_model_remote:/remote 
+      - /mnt/data1Tb/models_remote:/models_remote
+      - /mnt/data1Tb/seonics-machine-1/subset/:/infer_data
     working_dir: /code
+    networks:
+      - mcm-network
+
+######
+######   Remember to run docker network create mcm_network first
+######
+
+networks:
+  mcm-network:          ### this is the network that the db is running on. 
+    external: true
+    name: mcm_network

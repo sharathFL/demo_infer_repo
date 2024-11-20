@@ -1,51 +1,51 @@
-import torch
-import argparse
-import yaml
-import json
+import importlib.util
 import os
+import torch
+import joblib
+import pandas as pd
+
 import sys
+import os
 
-# Add the path to the cloned model builder repo to the Python path
-sys.path.insert(0, os.path.abspath("models_repo/src"))
+from models_repo.src.models.base_model import BaseModel
 
-# Import the model class and preprocessing/post-processing functions from the cloned model builder repo
-from models import DummyModelV2  # Import the model class from the cloned repo
-from preprocess import preprocess_audio_data  # Import the preprocessing function
-from postprocess import postprocess_anomaly_detection  # Import the post-processing function
+# Add models_repo/src to the system path
+sys.path.append("/code/src/models_repo/src")
 
-# Argument parsing to take the config file path
-parser = argparse.ArgumentParser(description="Run inference with the pulled model")
-parser.add_argument('--config', required=True, help="Path to the configuration file")
-args = parser.parse_args()
 
-# Load the configuration
-with open(args.config, "r") as f:
-    config = yaml.safe_load(f)
+# Define paths for dynamic imports
+models_repo_path = "/code/src/models_repo/src"
+trained_model_path= "/code/src/models_repo/trained_models/model.pt"
+model_meta_path='/code/src/models_repo/trained_models/model_meta.json'
 
-# Load the entire model (architecture + weights)
-model = torch.load("models/model.pt")
 
-# Print model version to confirm which model is being used
-print(f"Running inference with model version: {model.get_version()}")
+model_meta=BaseModel.load_model_meta(model_meta_path)
+print(model_meta)
 
-# Preprocess the input data and convert it to a tensor
-input_data = preprocess_audio_data("data/input/dummy_data.npy")
-input_tensor = torch.tensor(input_data).float()
+# Dynamically load the class
+class_name = model_meta.get('class_name')
+# module_name = module_name = f"models.{model_meta['class_name'].lower()}"  # Assuming filenames are lowercased
+module_name = f"models_repo.src.models.{model_meta['class_name'].lower()}"
 
-# Downsample or reshape the input to match the model's expected size (e.g., (10, 1))
-input_tensor = input_tensor.view(1600, 10).mean(dim=0).view(1, 10)
+model_class = getattr(importlib.import_module(module_name), class_name)
 
-# Forward pass through the model
-output = model(input_tensor)
+# Call the load method of the dynamically loaded class
+model = model_class.load(filepath=trained_model_path)
 
-# Post-process the model's output using the function from postprocess.py
-result = postprocess_anomaly_detection(output, config)
+# Define the file path for inference
+file_path = "/infer_data/audio_2024_01_11_05_44_48.wav"
 
-# Ensure the predictions directory exists
-os.makedirs(os.path.dirname(config["output_file"]), exist_ok=True)
+# Run preprocessing, prediction, and postprocessing
+features = model.preprocess(file_path)
+raw_prediction = model.predict(features)
+print(raw_prediction)
+result = model.postprocess(raw_prediction,features)
 
-# Save the results to the output file
-with open(config["output_file"], "w") as f:
-    json.dump(result, f)
+# Print the prediction result
+print(f"Inference result: {result}")
+# Ensure the results directory exists
+os.makedirs('results', exist_ok=True)
 
-print(f"Inference completed. Results saved to {config['output_file']}")
+# Sample prediction result
+predictions = pd.DataFrame([{"prediction": result}])  # Replace with actual prediction logic
+predictions.to_csv('results/predictions.csv', index=False)
